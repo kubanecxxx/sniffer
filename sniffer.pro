@@ -14,9 +14,16 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-        qcustomplot.cpp
+        qcustomplot.cpp \
+    dialoggraphs.cpp \
+    dialogfilterfiller.cpp
 
-HEADERS  += mainwindow.h qcustomplot.h
+HEADERS  += mainwindow.h qcustomplot.h \
+    dialoggraphs.h \
+    paket.h \
+    dialogfilterfiller.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    dialoggraphs.ui \
+    dialogfilterfiller.ui
 include(qextserialport/src/qextserialport.pri)

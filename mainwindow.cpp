@@ -4,6 +4,9 @@
 #include <QDateTime>
 #include "qcustomplot.h"
 #include "qextserialport.h"
+#include "dialoggraphs.h"
+
+Q_DECLARE_METATYPE(packet_t)
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -22,17 +25,8 @@ MainWindow::MainWindow(QWidget *parent) :
     comport = new QextSerialPort(nastaveni,QextSerialPort::EventDriven,this);
     connect(comport,SIGNAL(readyRead()),this,SLOT(comport_new_data()));
 
-
-    ui->widget->addGraph();
-    ui->widget->addGraph()->setPen(QPen(Qt::red));
-
-#define plot widget
-    ui->plot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-    ui->plot->xAxis->setDateTimeFormat("hh:mm:ss");
-    ui->plot->xAxis->setLabel(trUtf8("Čas"));
-    ui->plot->yAxis->setLabel(trUtf8("Teplota °C"));
-    ui->plot->legend->setVisible(true);
-    ui->plot->legend->setPositionStyle(QCPLegend::psTopLeft);
+    ui->tree->header()->setResizeMode(QHeaderView::ResizeToContents);
+    ui->treeMessage->header()->setResizeMode(QHeaderView::ResizeToContents);
 
     on_butRefresh_clicked();
     disable(false);
@@ -43,7 +37,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-#define PACKET_SIZE 10
+#define PACKET_SIZE 11
 
 void MainWindow::comport_new_data()
 {
@@ -59,58 +53,95 @@ void MainWindow::comport_new_data()
         QTreeWidgetItem * item = new QTreeWidgetItem;
         ui->tree->addTopLevelItem(item);
 
-        item->setData(0,Qt::DisplayRole,QTime::currentTime());
-        item->setText(1,message.toHex());
-        ParseMessage(*item,message);
+        item->setData(0,Qt::DisplayRole,QDateTime::currentDateTime());
+
+        packet_t pack = ParseMessage(*item,message);
+        emit newPacket(pack);
+
+        QString mes = message.toHex();
+        int i = 2;
+#define increm i++
+#define space " "
+        mes.insert(increm ,space);
+        i+= 2;
+        mes.insert(increm ,space);
+        i+= 2;
+        mes.insert(increm ,space);
+        i+= 2;
+        mes.insert(increm ,space);
+        i+= 4;
+        mes.insert(increm ,space);
+        i+= 8;
+        mes.insert(increm ,space);
+
+        item->setText(1,mes);
+        if (pack.checksum != pack.checksumLocal)
+            item->setTextColor(1,Qt::red);
     }
 }
 
-void MainWindow::ParseMessage(QTreeWidgetItem &item, const QByteArray &message)
+void MainWindow::ParsePaket(packet_t &packet, const QByteArray &message)
 {
-    QStringList list;
-    list << "IDLE" << "GET" << "SET" << "OKSET" << "OKGET" << "NOKSET" << "NOKGET" << "IDLEOK";
+    packet.checksumLocal = Checksum(message);
+    packet.source_addr = message.at(0);
+    packet.dest_addr = message.at(1);
+    packet.type = message.at(2);
+    packet.checksum = message.at(10);
+    memcpy(&packet.address,message.constData() + 4,2);
+    memcpy(&packet.data,message.constData()+6,4);
+}
 
-    quint8 check2 = Checksum(message);
-    int sourceAddr = message.at(0);
-    int destAddr = message.at(1);
-    int type = message.at(2);
-    quint16 address;
-    quint32 data;
-    int checksum = message.at(9);
-    memcpy(&address,message.constData() + 3,2);
-    memcpy(&data,message.constData()+5,4);
+void MainWindow::FillTreeItem(QTreeWidgetItem &item, const packet_t &packet)
+{
+    static int neco = 0;
+    neco++;
+    QStringList list;
+    list << TYPES;
 
     QTreeWidgetItem * it;
 
     it = new QTreeWidgetItem;
     it->setText(0,"Source Address");
-    it->setText(1,QString("%1").arg(sourceAddr));
+    it->setText(1,QString("%1").arg(packet.source_addr));
     item.addChild(it);
 
     it = new QTreeWidgetItem;
     it->setText(0,"Dest Address");
-    it->setText(1,QString("%1").arg(destAddr));
+    it->setText(1,QString("%1").arg(packet.dest_addr));
     item.addChild(it);
 
     it = new QTreeWidgetItem;
     it->setText(0,"Type");
-    it->setText(1,QString("%1 - %2").arg(type).arg(list.at(type)));
+    int type = packet.type;
+    if (type >= 8)
+        type = 8;
+    it->setText(1,QString("%1 - %2").arg(packet.type).arg(list.at(type)));
     item.addChild(it);
 
     it = new QTreeWidgetItem;
     it->setText(0,"Address");
-    it->setText(1,QString("%1").arg(address));
+    it->setText(1,QString("%1").arg(packet.address));
     item.addChild(it);
 
     it = new QTreeWidgetItem;
     it->setText(0,"Data");
-    it->setText(1,QString("%1").arg(data));
+    it->setText(1,QString("%1").arg(packet.data));
     item.addChild(it);
 
     it = new QTreeWidgetItem;
     it->setText(0,"Checksum");
-    it->setText(1,QString("%1 (vypocteno: %2)").arg(checksum).arg(check2));
+    it->setText(1,QString("%1 (vypocteno: %2)").arg(packet.checksum).arg(packet.checksumLocal));
     item.addChild(it);
+}
+
+packet_t MainWindow::ParseMessage(QTreeWidgetItem &item, const QByteArray &message)
+{
+    packet_t pack;
+    ParsePaket(pack,message);
+    FillTreeItem(item,pack);
+    pack.time = item.data(0,Qt::DisplayRole).value<QDateTime>();
+
+    return pack;
 }
 
 quint8 MainWindow::Checksum(const QByteArray &msg)
@@ -181,4 +212,29 @@ void MainWindow::on_pushButton_2_clicked()
         ui->textEdit->append(trUtf8("Zavřeno"));
         disable(false);
     }
+}
+
+void MainWindow::on_tree_itemClicked(QTreeWidgetItem *item, int )
+{
+    if (item->parent())
+        item = item->parent();
+
+    ui->treeMessage->clear();
+
+    QTreeWidgetItem * it = item->clone();
+    ui->treeMessage->addTopLevelItem(it);
+    ui->treeMessage->expandAll();
+}
+
+void MainWindow::on_actionGrafy_triggered()
+{
+    dialogGraphs * dlg = new dialogGraphs(this);
+    dlg->show();
+    connect(dlg,SIGNAL(finished(int)),this,SLOT(delete_dialog(int)));
+    connect(this,SIGNAL(newPacket(packet_t)),dlg,SLOT(rec_paket(packet_t)));
+}
+
+void MainWindow::delete_dialog(int)
+{
+    sender()->deleteLater();
 }
