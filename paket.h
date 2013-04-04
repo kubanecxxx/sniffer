@@ -15,12 +15,9 @@ public:
         data(0),
         checksum(0),
         checksumLocal(0),
-        time(QDateTime::currentDateTime()),
         color(random())
     {
-        bool ok = time.isValid();
 
-        asm("nop");
     }
 
     quint8 dest_addr;

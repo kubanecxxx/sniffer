@@ -28,6 +28,8 @@ private slots:
     void on_actionGrafy_triggered();
     void delete_dialog(int);
 
+    void on_actionClear_triggered();
+
 signals:
     void newPacket(packet_t packet);
 

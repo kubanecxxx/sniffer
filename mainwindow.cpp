@@ -239,3 +239,9 @@ void MainWindow::delete_dialog(int)
 {
     sender()->deleteLater();
 }
+
+void MainWindow::on_actionClear_triggered()
+{
+    ui->tree->clear();
+    ui->treeMessage->clear();
+}

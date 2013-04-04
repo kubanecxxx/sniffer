@@ -41,6 +41,9 @@
        </column>
       </widget>
       <widget class="QTreeWidget" name="treePakety">
+       <property name="contextMenuPolicy">
+        <enum>Qt::ActionsContextMenu</enum>
+       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
@@ -51,7 +54,7 @@
         <number>3</number>
        </property>
        <attribute name="headerVisible">
-        <bool>true</bool>
+        <bool>false</bool>
        </attribute>
        <column>
         <property name="text">
@@ -86,6 +89,11 @@
   <action name="actionEdit_filter">
    <property name="text">
     <string>Edit filter</string>
+   </property>
+  </action>
+  <action name="actionClear">
+   <property name="text">
+    <string>Clear</string>
    </property>
   </action>
  </widget>

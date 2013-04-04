@@ -18,6 +18,8 @@ dialogGraphs::dialogGraphs(QWidget *parent) :
     menu->addAction(ui->actionEdit_filter);
     menu->addAction(ui->actionDelete_filter);
 
+    ui->treePakety->addAction(ui->actionClear);
+    connect(ui->actionClear,SIGNAL(triggered()),ui->treePakety,SLOT(clear()));
 
     ui->plot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
     ui->plot->xAxis->setDateTimeFormat("hh:mm:ss");
