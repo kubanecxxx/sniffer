@@ -71,12 +71,12 @@ void MainWindow::ParseMessage(QTreeWidgetItem &item, const QByteArray &message)
     list << "IDLE" << "GET" << "SET" << "OKSET" << "OKGET" << "NOKSET" << "NOKGET" << "IDLEOK";
 
     quint8 check2 = Checksum(message);
-    char sourceAddr = message.at(0);
-    char destAddr = message.at(1);
-    char type = message.at(2);
+    int sourceAddr = message.at(0);
+    int destAddr = message.at(1);
+    int type = message.at(2);
     quint16 address;
     quint32 data;
-    char checksum = message.at(9);
+    int checksum = message.at(9);
     memcpy(&address,message.constData() + 3,2);
     memcpy(&data,message.constData()+5,4);
 
