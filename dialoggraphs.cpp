@@ -157,6 +157,7 @@ void dialogGraphs::on_actionDelete_filter_triggered()
 {
     QTreeWidgetItem * item = ui->actionDelete_filter->property("graph").value<QTreeWidgetItem*>();;
     QCPGraph * graph = item->data(0,Qt::UserRole).value<QCPGraph*>();
+    delete item;
     filters.remove(graph);
     ui->plot->removeGraph(graph);
 }
