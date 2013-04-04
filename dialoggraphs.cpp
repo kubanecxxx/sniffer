@@ -29,19 +29,12 @@ dialogGraphs::dialogGraphs(QWidget *parent) :
     ui->treePakety->header()->setResizeMode(QHeaderView::ResizeToContents);
 
     packet_t filter;
-    filter.name = "trouba";
-    filter.dest_addr = 5;
-    filter.source_addr = 1;
-    filter.type = 2;
-    filter.address = 1;
-
-    addTrack(filter);
-
-    filter.name = "trouba2";
-    filter.dest_addr = 5;
-    filter.source_addr = 1;
-    filter.type = 1;
+    filter.name = "teplota";
+    filter.dest_addr = 1;
+    filter.source_addr = 5;
+    filter.type = 4;
     filter.address = 0;
+
     addTrack(filter);
 }
 
@@ -64,7 +57,7 @@ void dialogGraphs::rec_paket(packet_t packet)
             it.key()->addData(time.toTime_t(),value);
 
             QTreeWidgetItem * item = new QTreeWidgetItem;
-            item->setData(0,Qt::DisplayRole,time);
+            item->setData(0,Qt::DisplayRole,time.time());
             item->setText(1,it.key()->name());
             item->setData(2,Qt::DisplayRole,value);
             ui->treePakety->addTopLevelItem(item);

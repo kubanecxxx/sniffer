@@ -140,6 +140,7 @@ packet_t MainWindow::ParseMessage(QTreeWidgetItem &item, const QByteArray &messa
     ParsePaket(pack,message);
     FillTreeItem(item,pack);
     pack.time = item.data(0,Qt::DisplayRole).value<QDateTime>();
+    item.setData(0,Qt::DisplayRole,pack.time.time());
 
     return pack;
 }
